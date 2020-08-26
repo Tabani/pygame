@@ -1157,7 +1157,7 @@ class TransformModuleTest(unittest.TestCase):
 
         self.assertEqual(s1.get_rect(), pygame.Rect(0,0,0,0))
 
-    def todo_test_smoothscale(self):
+    def test_smoothscale(self):
         # __doc__ (as of 2008-08-02) for pygame.transform.smoothscale:
 
         # pygame.transform.smoothscale(Surface, (width, height), DestSurface =
@@ -1176,7 +1176,44 @@ class TransformModuleTest(unittest.TestCase):
         #
         # New in pygame 1.8
 
-        self.fail()
+        def assert_same(a, b):
+            w, h = a.get_size()
+            w1, h1 = b.get_size()
+            self.assertEqual(w,w1)
+            self.assertEqual(h,h1)
+            for x in range(w):
+                for y in range(h):
+                    self.assertEqual(
+                        a.get_at((x, y)),
+                        b.get_at((x, y)),
+                        (
+                            "%s != %s, bpp: %i"
+                            % (a.get_at((x, y)), b.get_at((x, y)), a.get_bitsize())
+                        ),
+                    )
+        
+        s = pygame.Surface((50,50), 0, 24)
+        s1 = pygame.Surface((40,40), 0, 24)
+
+        # the destination surface is not the same width/height as the specified argument. Should raise an error
+        self.assertRaises(ValueError, pygame.transform.smoothscale, s, (50,50), s1)
+
+        # a negative height is passed in. Should raise an error
+        self.assertRaises(ValueError, pygame.transform.smoothscale, s, (-1,100))
+
+        depths = [24, 32]
+        # testing for 24-bits and 32-bits surfaces
+        for x in depths:
+            s = pygame.Surface((50,50), 0, x)
+            s.fill((255,255,255))
+            
+            s1 = pygame.transform.smoothscale(s, (100,100))
+            s2 = pygame.transform.scale2x(s)
+            s3 = pygame.transform.smoothscale(s, (50,50))
+            s4 = pygame.transform.smoothscale(s1, (50,50))
+            assert_same(s1,s2)
+            assert_same(s,s3)
+            assert_same(s,s4)
 
 
 class TransformDisplayModuleTest(unittest.TestCase):
